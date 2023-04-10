@@ -1,4 +1,4 @@
-import { createSignal, For } from "solid-js";
+import { batch, createSignal, For, Show } from "solid-js";
 import { Graph } from "../algorithm/Graph";
 import { PathFinder as PathFinderAlgorithm } from "../algorithm/pathfinder/PathFinder";
 import { Connections } from "../data/Connection";
@@ -18,6 +18,7 @@ export default function PathFinder() {
   const [to, setTo] = createSignal<number>(0);
 
   const [path, setPath] = createSignal<number[]>([]);
+  const [time, setTime] = createSignal<number>(0);
 
   async function findPath() {
     let connections = Connections;
@@ -26,8 +27,13 @@ export default function PathFinder() {
     if (avoidBus()) connections = connections.filter(c => c.method != TravelMethod.BUS);
     if (avoidTaxi()) connections = connections.filter(c => c.method != TravelMethod.TAXI);
 
+    const startTime = Date.now();
     const finder = new PathFinderAlgorithm(new Graph(connections, Stations));
-    setPath(finder.findShortestPath(from(), to()));
+    const solution = finder.findShortestPath(from(), to());
+    batch(() => {
+      setPath(solution);
+      setTime(Date.now() - startTime);
+    });
   }
 
   return <>
@@ -68,30 +74,33 @@ export default function PathFinder() {
 
       <button onClick={findPath}>Find path</button>
 
-      <ol>
-        
-      </ol>
+      <Show when={path().length != 0}>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Station</th>
+              <th scope="col">Station Methods</th>
+            </tr>
+          </thead>
+          <tbody>
+            <For each={path()}>
+              {(segment, i) => <tr>
+                <th>{i() + 1}</th>
+                <th>{segment}</th>
+                <th>
+                  <StationMethods methods={getStationByNumber(segment).methods} />
+                </th>
+              </tr>}
+            </For>
+          </tbody>
+        </table>
 
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Station</th>
-            <th scope="col">Station Methods</th>
-          </tr>
-        </thead>
-        <tbody>
-        <For each={path()}>
-          {(segment, i) => <tr>
-            <th>{i() + 1}</th>
-            <th>{segment}</th>
-            <th>
-              <StationMethods methods={getStationByNumber(segment).methods} />
-            </th>  
-          </tr>}
-        </For>
-        </tbody>
-      </table>
+        <span>Time to solve: {time()}ms</span>
+      </Show>
+      <Show when={path().length == 0}>
+        <span>Please enter a valid starting and ending point or no path found!</span>
+      </Show>
     </div>
   </>
 }
