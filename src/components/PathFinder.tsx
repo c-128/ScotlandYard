@@ -4,6 +4,7 @@ import { PathFinder as PathFinderAlgorithm } from "../algorithm/pathfinder/PathF
 import { Connections } from "../data/Connection";
 import { getStationByNumber, Stations } from "../data/Station";
 import { TravelMethod } from "../data/TravelMethod";
+import StationMethods from "./StationMethods";
 import StationPreview from "./StationPreview";
 
 export default function PathFinder() {
@@ -68,12 +69,29 @@ export default function PathFinder() {
       <button onClick={findPath}>Find path</button>
 
       <ol>
-        <For each={path()}>
-          {(segment, i) => <li>
-            <StationPreview station={getStationByNumber(segment)} />
-          </li>}
-        </For>
+        
       </ol>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Station</th>
+            <th scope="col">Station Methods</th>
+          </tr>
+        </thead>
+        <tbody>
+        <For each={path()}>
+          {(segment, i) => <tr>
+            <th>{i() + 1}</th>
+            <th>{segment}</th>
+            <th>
+              <StationMethods methods={getStationByNumber(segment).methods} />
+            </th>  
+          </tr>}
+        </For>
+        </tbody>
+      </table>
     </div>
   </>
 }
